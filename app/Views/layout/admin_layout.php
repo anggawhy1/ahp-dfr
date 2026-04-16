@@ -7,13 +7,23 @@
     <link href="<?= base_url('css/output.css') ?>" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* Obat sakti anti nge-jeplak / kesetrum (FOUC) saat pertama kali loading */
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 
-<body class="bg-slate-50 font-sans text-slate-900" x-data="{ sidebarOpen: window.innerWidth >= 1024, logoutModalOpen: false }">
+<body class="bg-slate-50 font-sans text-slate-900" 
+      x-data="{ 
+          sidebarOpen: localStorage.getItem('sidebarState') !== null ? localStorage.getItem('sidebarState') === 'true' : window.innerWidth >= 1024, 
+          logoutModalOpen: false 
+      }"
+      x-init="$watch('sidebarOpen', val => localStorage.setItem('sidebarState', val))">
 
     <aside 
+        x-cloak
         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none">
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none -translate-x-full">
         
         <div class="h-full flex flex-col p-5 w-64 relative">
             
@@ -37,6 +47,10 @@
                 <a href="/admin/rekap" class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition <?= (strpos(uri_string(), 'admin/rekap') !== false || strpos(uri_string(), 'admin/detail') !== false) ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50' ?> font-semibold text-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Rekapitulasi
+                </a>
+                <a href="/admin/indikator" class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition <?= (strpos(uri_string(), 'admin/indikator') !== false) ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50' ?> font-semibold text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Master Indikator
                 </a>
             </nav>
 

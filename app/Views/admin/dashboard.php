@@ -82,8 +82,17 @@
             </div>
         </div>
 
-        <div class="h-[400px] w-full">
-            <canvas id="compareChart"></canvas>
+        <style>
+            .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        </style>
+
+        <div class="w-full overflow-x-auto pb-4 custom-scrollbar">
+            <div class="h-[400px]" style="min-width: max(100%, <?= count($comparison ?? []) * 60 ?>px);">
+                <canvas id="compareChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -106,7 +115,9 @@
                 borderColor: '#1e40af',
                 borderWidth: 1.5,
                 borderRadius: 8,
-                barPercentage: 0.5
+                barPercentage: 0.6,
+                // FIX: Membatasi maksimal ketebalan bar agar tidak gemuk saat data sedikit
+                maxBarThickness: 45 
             }]
         },
         options: {

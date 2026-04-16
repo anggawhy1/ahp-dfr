@@ -8,6 +8,26 @@
     <link href="<?= base_url('css/output.css') ?>" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* CSS untuk Custom Scrollbar pada Grafik */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 pb-20 font-sans text-gray-900">
@@ -55,9 +75,7 @@
                                     </svg>
                                     <span class="font-bold">Pengaturan Akun</span>
                                 </a>
-
                                 <div class="h-px bg-slate-100 my-1 mx-4"></div>
-
                                 <button @click="profileOpen = false; showLogoutModal()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 transition group text-left">
                                     <svg class="w-4 h-4 text-red-400 group-hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -72,11 +90,12 @@
             </div>
         </div>
     </nav>
+
     <div class="max-w-6xl mx-auto px-4 mt-8 space-y-8">
 
         <?php if (session()->getFlashdata('success')): ?>
             <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-3">
-                <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 text-green-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="font-medium text-sm"><?= session()->getFlashdata('success') ?></span>
@@ -84,7 +103,7 @@
         <?php endif; ?>
         <?php if (session()->getFlashdata('error')): ?>
             <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3">
-                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="font-medium text-sm"><?= session()->getFlashdata('error') ?></span>
@@ -98,28 +117,24 @@
             </div>
 
             <div class="grid grid-cols-2 sm:flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-
                 <a href="/user/history" class="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl shadow-sm hover:bg-slate-50 hover:text-blue-600 transition gap-2 text-xs sm:text-sm">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span class="truncate">Riwayat</span>
                 </a>
-
                 <a href="/user/export/<?= $result->id ?>" class="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 bg-white border border-red-100 text-red-500 font-bold rounded-xl shadow-sm hover:bg-red-50 hover:text-red-600 transition gap-2 text-xs sm:text-sm">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                     </svg>
                     <span class="truncate">Cetak PDF</span>
                 </a>
-
                 <a href="/user/assessment" class="col-span-2 sm:col-span-1 inline-flex items-center justify-center px-5 py-2.5 sm:py-2 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-200 hover:bg-blue-700 transition gap-2 text-sm w-full sm:w-auto">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
                     <span>Ulangi Tes</span>
                 </a>
-
             </div>
         </div>
 
@@ -182,6 +197,24 @@
                     <h3 class="text-lg font-bold text-gray-800">Weighted Score (Kontribusi)</h3>
                 </div>
                 <div class="h-64 md:h-80 w-full"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 lg:p-10 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-100 pb-6">
+                <div>
+                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Perbandingan Antar Kampus</h3>
+                    <p class="text-slate-400 font-semibold text-xs mt-1">Peta posisi indeks institusi Anda dibandingkan dengan seluruh universitas terdaftar.</p>
+                </div>
+                <div class="px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-[10px] font-bold text-blue-600 uppercase">
+                    Analytical Hierarchy Process
+                </div>
+            </div>
+
+            <div class="w-full overflow-x-auto pb-4 custom-scrollbar">
+                <div class="h-80 md:h-[450px]" style="min-width: max(100%, <?= count($compareLabels ?? []) * 60 ?>px);">
+                    <canvas id="compareChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -289,6 +322,93 @@
                     }
                 },
                 maintainAspectRatio: false
+            }
+        });
+
+        // ==========================================
+        // CHART PERBANDINGAN KAMPUS (ADAPTASI ADMIN)
+        // ==========================================
+        const ctxCompare = document.getElementById('compareChart').getContext('2d');
+        const compareLabels = <?= json_encode($compareLabels ?? []) ?>;
+        const compareData = <?= json_encode($compareData ?? []) ?>;
+
+        const gradientUser = ctxCompare.createLinearGradient(0, 0, 0, 400);
+        gradientUser.addColorStop(0, 'rgba(37, 99, 235, 0.9)');
+        gradientUser.addColorStop(1, 'rgba(37, 99, 235, 0.2)');
+
+        const barColors = compareLabels.map(label => label.startsWith('Anda') ? gradientUser : 'rgba(203, 213, 225, 0.4)');
+        const borderColors = compareLabels.map(label => label.startsWith('Anda') ? '#1e40af' : 'transparent');
+
+        new Chart(ctxCompare, {
+            type: 'bar',
+            data: {
+                labels: compareLabels,
+                datasets: [{
+                    label: 'Readiness Index',
+                    data: compareData,
+                    backgroundColor: barColors,
+                    borderColor: borderColors,
+                    borderWidth: 1.5,
+                    borderRadius: 8,
+                    barPercentage: 0.6,
+                    maxBarThickness: 45 // FIX: Mencegah batang terlalu tebal saat data sedikit
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        bottom: 20
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ' RI Score: ' + context.raw.toFixed(4);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                weight: 'bold',
+                                size: 10
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#334155',
+                            font: {
+                                weight: 'bold',
+                                size: 10
+                            },
+                            autoSkip: false,
+                            maxRotation: 90,
+                            minRotation: 0
+                        }
+                    }
+                }
             }
         });
     </script>

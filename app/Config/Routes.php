@@ -13,7 +13,6 @@ $routes->get('/register', 'AuthController::register');
 $routes->post('/register/process', 'AuthController::register_process');
 $routes->get('/logout', 'AuthController::logout');
 
-// 2. Routes untuk User / Kampus (Terkunci oleh Filter 'authUser')
 $routes->group('user', ['filter' => 'authUser'], static function ($routes) {
     $routes->get('assessment', 'AssessmentController::index');
     $routes->post('assessment/submit', 'AssessmentController::submit');
@@ -24,7 +23,6 @@ $routes->group('user', ['filter' => 'authUser'], static function ($routes) {
     $routes->get('history', 'AssessmentController::history');
 });
 
-// 3. Routes untuk Admin Pusat (Terkunci oleh Filter 'authAdmin')
 $routes->group('admin', ['filter' => 'authAdmin'], static function ($routes) {
     $routes->get('dashboard', 'AssessmentController::admin_dashboard');
     $routes->get('rekap', 'AssessmentController::admin_rekap');
@@ -32,4 +30,9 @@ $routes->group('admin', ['filter' => 'authAdmin'], static function ($routes) {
     $routes->get('export/(:num)', 'AssessmentController::export_pdf/$1');
     $routes->get('profile', 'AssessmentController::admin_profile');
     $routes->post('profile/update', 'AssessmentController::admin_update_profile');
+    $routes->get('indikator', 'AssessmentController::admin_indikator');
+    $routes->post('indikator/update_bobot', 'AssessmentController::admin_update_bobot');
+    $routes->post('indikator/store', 'AssessmentController::admin_store_indikator');
+    $routes->post('indikator/update/(:num)', 'AssessmentController::admin_update_indikator/$1');
+    $routes->get('indikator/delete/(:num)', 'AssessmentController::admin_delete_indikator/$1');
 });

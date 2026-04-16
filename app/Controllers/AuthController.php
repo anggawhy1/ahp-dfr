@@ -27,7 +27,7 @@ class AuthController extends BaseController
                 return $this->redirectUserBasedOnAssessment(session()->get('id'));
             }
         }
-        
+
         return view('auth/login');
     }
 
@@ -74,31 +74,33 @@ class AuthController extends BaseController
     public function register_process()
     {
         $db = \Config\Database::connect();
-        
-        $username = $this->request->getVar('username');
-        $password = $this->request->getVar('password');
-        $nama_kampus = $this->request->getVar('nama_kampus');
 
-        $existingUser = $db->table('users')->where('username', $username)->get()->getRow();
-        if ($existingUser) {
-            return redirect()->back()->with('error', 'Gagal! Username tersebut sudah terdaftar.');
+        if (!$this->validate([
+            'username'     => 'required|is_unique[users.username]',
+            'nama_lengkap' => 'required',
+            'email'        => 'required|valid_email',
+            'nama_kampus'  => 'required',
+            'password'     => 'required|min_length[5]',
+        ])) {
+            return redirect()->back()->withInput()->with('error', 'Cek kembali form Anda (Email harus valid & Username harus unik)');
         }
 
         $userData = [
-            'username' => $username,
-            'password' => password_hash($password, PASSWORD_BCRYPT),
-            'role'     => 'user'
+            'username'     => $this->request->getPost('username'),
+            'nama_lengkap' => $this->request->getPost('nama_lengkap'),
+            'email'        => $this->request->getPost('email'),
+            'password'     => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
+            'role'         => 'user'
         ];
         $db->table('users')->insert($userData);
         $userId = $db->insertID();
 
         $db->table('campuses')->insert([
             'user_id'     => $userId,
-            'nama_kampus' => $nama_kampus,
-            'alamat'      => '-'
+            'nama_kampus' => $this->request->getPost('nama_kampus')
         ]);
 
-        return redirect()->to('/login')->with('success', 'Registrasi berhasil! Silakan login menggunakan akun Anda.');
+        return redirect()->to('/login')->with('success', 'Registrasi berhasil! Silakan masuk.');
     }
 
     public function logout()
@@ -110,17 +112,17 @@ class AuthController extends BaseController
     private function redirectUserBasedOnAssessment($userId)
     {
         $db = \Config\Database::connect();
-        
+
         $campus = $db->table('campuses')->where('user_id', $userId)->get()->getRow();
-        
+
         if ($campus) {
             $hasAssessment = $db->table('assessments')->where('campus_id', $campus->id)->countAllResults();
-            
+
             if ($hasAssessment > 0) {
                 return redirect()->to('/user/dashboard');
             }
         }
-        
+
         return redirect()->to('/user/assessment');
     }
 }

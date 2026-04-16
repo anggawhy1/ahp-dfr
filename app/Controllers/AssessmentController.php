@@ -12,7 +12,7 @@ class AssessmentController extends BaseController
 {
     public function index()
     {
-        $session = session(); 
+        $session = session();
         $db = \Config\Database::connect();
 
         $indicators = $db->table('indicators')->get()->getResultArray();
@@ -21,7 +21,7 @@ class AssessmentController extends BaseController
 
         $data = [
             'indicators' => $indicators,
-            'campus'     => $campus, 
+            'campus'     => $campus,
             'title'      => 'Form Assessment DFR'
         ];
 
@@ -33,10 +33,12 @@ class AssessmentController extends BaseController
         $session = session();
         $db = \Config\Database::connect();
 
-        $answers = $this->request->getPost('answers'); 
+        $answers = $this->request->getPost('answers');
 
-        if (!$answers || count($answers) < 40) {
-            return redirect()->back()->with('error', 'Gagal memproses! Harap isi seluruh 40 pertanyaan indikator sebelum menghitung hasil.');
+        $total_indikator_db = $db->table('indicators')->countAllResults();
+
+        if (!$answers || count($answers) < $total_indikator_db) {
+            return redirect()->back()->with('error', 'Gagal memproses! Harap isi seluruh ' . $total_indikator_db . ' pertanyaan indikator sebelum menghitung hasil.');
         }
 
         $scores = ['E1' => [], 'E2' => [], 'E3' => [], 'E4' => []];
@@ -45,15 +47,21 @@ class AssessmentController extends BaseController
             $scores[$ind->element][] = $skor;
         }
 
-        $s_e1 = array_sum($scores['E1']) / count($scores['E1']);
-        $s_e2 = array_sum($scores['E2']) / count($scores['E2']);
-        $s_e3 = array_sum($scores['E3']) / count($scores['E3']);
-        $s_e4 = array_sum($scores['E4']) / count($scores['E4']);
+        $s_e1 = count($scores['E1']) > 0 ? array_sum($scores['E1']) / count($scores['E1']) : 0;
+        $s_e2 = count($scores['E2']) > 0 ? array_sum($scores['E2']) / count($scores['E2']) : 0;
+        $s_e3 = count($scores['E3']) > 0 ? array_sum($scores['E3']) / count($scores['E3']) : 0;
+        $s_e4 = count($scores['E4']) > 0 ? array_sum($scores['E4']) / count($scores['E4']) : 0;
 
-        $ws_e1 = $s_e1 * 0.3917;
-        $ws_e2 = $s_e2 * 0.2999;
-        $ws_e3 = $s_e3 * 0.1683;
-        $ws_e4 = $s_e4 * 0.1401;
+        $weights = [];
+        $elements_db = $db->table('elements')->get()->getResultArray();
+        foreach ($elements_db as $el) {
+            $weights[$el['code']] = (float) $el['weight'];
+        }
+
+        $ws_e1 = $s_e1 * ($weights['E1'] ?? 0);
+        $ws_e2 = $s_e2 * ($weights['E2'] ?? 0);
+        $ws_e3 = $s_e3 * ($weights['E3'] ?? 0);
+        $ws_e4 = $s_e4 * ($weights['E4'] ?? 0);
 
         $total_ri = $ws_e1 + $ws_e2 + $ws_e3 + $ws_e4;
         $ri_100 = (($total_ri - 1) / 4) * 100;
@@ -108,11 +116,27 @@ class AssessmentController extends BaseController
             return redirect()->to('/user/assessment')->with('error', 'Silakan isi assessment terlebih dahulu.');
         }
 
+        $allAssessments = $db->table('assessments')
+            ->select('campuses.nama_kampus, assessments.total_ri')
+            ->join('campuses', 'campuses.id = assessments.campus_id')
+            ->orderBy('assessments.total_ri', 'DESC')
+            // ->limit(5) 
+            ->get()->getResult();
+
+        $compareLabels = [];
+        $compareData = [];
+        foreach ($allAssessments as $row) {
+            $compareLabels[] = ($row->nama_kampus == $campus->nama_kampus) ? 'Anda (' . $row->nama_kampus . ')' : $row->nama_kampus;
+            $compareData[] = $row->total_ri;
+        }
+
         $data = [
-            'title'  => 'Dashboard Hasil DFR',
-            'campus' => $campus,
-            'result' => $result,
-            'conclusion' => $this->get_conclusion($result->maturity_level)
+            'title'         => 'Dashboard Hasil DFR',
+            'campus'        => $campus,
+            'result'        => $result,
+            'conclusion'    => $this->get_conclusion($result->maturity_level),
+            'compareLabels' => $compareLabels,
+            'compareData'   => $compareData
         ];
 
         return view('user/dashboard', $data);
@@ -125,9 +149,12 @@ class AssessmentController extends BaseController
 
         $campus = $db->table('campuses')->where('user_id', $session->get('id'))->get()->getRow();
 
+        $user = $db->table('users')->where('id', $session->get('id'))->get()->getRow();
+
         $data = [
             'title'  => 'Pengaturan Profil - DFR',
-            'campus' => $campus
+            'campus' => $campus,
+            'user'   => $user
         ];
 
         return view('user/profile', $data);
@@ -139,11 +166,15 @@ class AssessmentController extends BaseController
         $db = \Config\Database::connect();
         $id_user = $session->get('id');
 
-        $username = $this->request->getPost('username');
+        $nama_lengkap = $this->request->getPost('nama_lengkap');
+        $email        = $this->request->getPost('email');
         $new_password = $this->request->getPost('new_password');
         $confirm_password = $this->request->getPost('confirm_password');
 
-        $dataUpdate = ['username' => $username];
+        $dataUpdate = [
+            'nama_lengkap' => $nama_lengkap,
+            'email'        => $email
+        ];
 
         if (!empty($new_password)) {
             if ($new_password !== $confirm_password) {
@@ -152,14 +183,7 @@ class AssessmentController extends BaseController
             $dataUpdate['password'] = password_hash($new_password, PASSWORD_BCRYPT);
         }
 
-        $cekUser = $db->table('users')->where('username', $username)->where('id !=', $id_user)->get()->getRow();
-        if ($cekUser) {
-            return redirect()->back()->with('error', 'Gagal: Username tersebut sudah digunakan oleh pengguna lain.');
-        }
-
         $db->table('users')->where('id', $id_user)->update($dataUpdate);
-
-        $session->set('username', $username);
 
         return redirect()->to('/user/profile')->with('success', 'Berhasil: Profil dan keamanan akun telah diperbarui!');
     }
@@ -251,15 +275,28 @@ class AssessmentController extends BaseController
         ];
 
         $dompdf = new \Dompdf\Dompdf();
-        $html = view('user/export_pdf', $data);
 
+        // Opsi tambahan agar Dompdf lebih "berani" di hosting
+        $options = $dompdf->getOptions();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $dompdf->setOptions($options);
+
+        $html = view('user/export_pdf', $data);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
         $nama_file = "Laporan_DFR_" . str_replace(' ', '_', $campus->nama_kampus) . ".pdf";
 
-        $dompdf->stream($nama_file, ["Attachment" => true]);
+        if (ob_get_length()) ob_end_clean();
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $nama_file . '"');
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+
+        echo $dompdf->output();
         exit();
     }
 
@@ -334,5 +371,68 @@ class AssessmentController extends BaseController
         ];
 
         return view('user/history', $data);
+    }
+
+    public function admin_indikator()
+    {
+        $db = \Config\Database::connect();
+
+        $data = [
+            'title' => 'Master Indikator - DFR Admin',
+            'elements' => $db->table('elements')->get()->getResultArray(),
+            'indicators' => $db->table('indicators')
+                ->orderBy('element', 'ASC')
+                ->orderBy('id', 'ASC')
+                ->get()->getResultArray()
+        ];
+
+        return view('admin/indikator', $data);
+    }
+
+    public function admin_update_bobot()
+    {
+        $db = \Config\Database::connect();
+        $weights = $this->request->getPost('weight'); // Format array dari form
+
+        foreach ($weights as $code => $val) {
+            $db->table('elements')->where('code', $code)->update(['weight' => $val]);
+        }
+
+        return redirect()->to('/admin/indikator')->with('success', 'Nilai bobot AHP berhasil diperbarui!');
+    }
+
+    public function admin_store_indikator()
+    {
+        $db = \Config\Database::connect();
+        $data = [
+            'element'   => $this->request->getPost('element'),
+            'code'      => $this->request->getPost('code'),
+            'statement' => $this->request->getPost('statement'),
+        ];
+
+        $db->table('indicators')->insert($data);
+        return redirect()->to('/admin/indikator')->with('success', 'Indikator baru berhasil ditambahkan!');
+    }
+
+    public function admin_update_indikator($id)
+    {
+        $db = \Config\Database::connect();
+        $data = [
+            'element'   => $this->request->getPost('element'),
+            'code'      => $this->request->getPost('code'),
+            'statement' => $this->request->getPost('statement'),
+        ];
+
+        $db->table('indicators')->where('id', $id)->update($data);
+        return redirect()->to('/admin/indikator')->with('success', 'Data indikator berhasil diperbarui!');
+    }
+
+    public function admin_delete_indikator($id)
+    {
+        $db = \Config\Database::connect();
+        $db->table('assessment_answers')->where('indicator_id', $id)->delete();
+        $db->table('indicators')->where('id', $id)->delete();
+
+        return redirect()->to('/admin/indikator')->with('success', 'Indikator berhasil dihapus!');
     }
 }
